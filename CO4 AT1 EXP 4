@@ -1,0 +1,130 @@
+# 4. Simplified PGP System
+# Public-key encryption + digital signatures for secure email.
+
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+import base64
+
+
+class PGPUser:
+
+    def __init__(self, name):
+        self.name = name
+        self.private_key = RSA.generate(2048)
+        self.public_key = self.private_key.publickey()
+
+
+def sign_message(private_key, message):
+    digest = SHA256.new(message.encode())
+
+    signature = pkcs1_15.new(
+        private_key
+    ).sign(digest)
+
+    return base64.b64encode(signature).decode()
+
+
+def verify_signature(public_key, message, signature):
+    try:
+        signature = base64.b64decode(signature)
+        digest = SHA256.new(message.encode())
+
+        pkcs1_15.new(
+            public_key
+        ).verify(digest, signature)
+
+        return True
+
+    except (ValueError, TypeError):
+        return False
+
+
+def encrypt_message(public_key, message):
+    cipher = PKCS1_OAEP.new(public_key)
+
+    encrypted = cipher.encrypt(
+        message.encode()
+    )
+
+    return base64.b64encode(encrypted).decode()
+
+
+def decrypt_message(private_key, encrypted_message):
+    encrypted = base64.b64decode(
+        encrypted_message
+    )
+
+    cipher = PKCS1_OAEP.new(private_key)
+
+    decrypted = cipher.decrypt(encrypted)
+
+    return decrypted.decode()
+
+
+# Create users
+alice = PGPUser("Alice")
+bob = PGPUser("Bob")
+
+message = "Hello Bob, this is a secure email."
+
+print("Original Message:")
+print(message)
+
+# Alice signs the message
+signature = sign_message(
+    alice.private_key,
+    message
+)
+
+print("\nDigital Signature:")
+print(signature)
+
+# Encrypt message using Bob's public key
+encrypted_message = encrypt_message(
+    bob.public_key,
+    message
+)
+
+print("\nEncrypted Message:")
+print(encrypted_message)
+
+# Bob decrypts message
+decrypted_message = decrypt_message(
+    bob.private_key,
+    encrypted_message
+)
+
+print("\nDecrypted Message:")
+print(decrypted_message)
+
+# Bob verifies Alice's signature
+valid = verify_signature(
+    alice.public_key,
+    decrypted_message,
+    signature
+)
+
+print("\nSignature Verification:")
+
+if valid:
+    print("Signature is VALID")
+else:
+    print("Signature is INVALID")
+
+# Tampering test
+tampered_message = "Hello Bob, this message was modified."
+
+valid = verify_signature(
+    alice.public_key,
+    tampered_message,
+    signature
+)
+
+print("\nTampered Message Verification:")
+
+if valid:
+    print("Signature is VALID")
+else:
+    print("Signature is INVALID")
