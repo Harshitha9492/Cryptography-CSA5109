@@ -1,0 +1,89 @@
+# ============================================================
+# 1. DEBUGGING & OPTIMIZATION OF DES / 3DES
+# ============================================================
+# Install: pip install pycryptodome
+
+from Crypto.Cipher import DES, DES3
+from Crypto.Util.Padding import pad, unpad
+import time
+import os
+
+
+def des_encrypt(data, key):
+    key = key[:8]
+    cipher = DES.new(key, DES.MODE_CBC, iv=b"12345678")
+    return cipher.encrypt(pad(data, DES.block_size))
+
+
+def des_decrypt(ciphertext, key):
+    key = key[:8]
+    cipher = DES.new(key, DES.MODE_CBC, iv=b"12345678")
+    return unpad(cipher.decrypt(ciphertext), DES.block_size)
+
+
+def triple_des_encrypt(data, key):
+    key = DES3.adjust_key_parity(key)
+    cipher = DES3.new(
+        key,
+        DES3.MODE_CBC,
+        iv=b"12345678"
+    )
+    return cipher.encrypt(pad(data, DES3.block_size))
+
+
+def triple_des_decrypt(ciphertext, key):
+    key = DES3.adjust_key_parity(key)
+    cipher = DES3.new(
+        key,
+        DES3.MODE_CBC,
+        iv=b"12345678"
+    )
+    return unpad(cipher.decrypt(ciphertext), DES3.block_size)
+
+
+# Large input dataset
+data = os.urandom(10 * 1024 * 1024)
+
+des_key = b"8bytekey"
+des3_key = DES3.adjust_key_parity(
+    b"123456789012345678901234"
+)
+
+print("DATA SIZE:", len(data), "bytes")
+
+# DES
+start = time.perf_counter()
+des_ciphertext = des_encrypt(data, des_key)
+des_time = time.perf_counter() - start
+
+start = time.perf_counter()
+des_plaintext = des_decrypt(des_ciphertext, des_key)
+des_decrypt_time = time.perf_counter() - start
+
+print("\nDES")
+print("Encryption Time:", des_time)
+print("Decryption Time:", des_decrypt_time)
+print("Correct:", data == des_plaintext)
+
+# 3DES
+start = time.perf_counter()
+des3_ciphertext = triple_des_encrypt(data, des3_key)
+des3_time = time.perf_counter() - start
+
+start = time.perf_counter()
+des3_plaintext = triple_des_decrypt(
+    des3_ciphertext,
+    des3_key
+)
+des3_decrypt_time = time.perf_counter() - start
+
+print("\n3DES")
+print("Encryption Time:", des3_time)
+print("Decryption Time:", des3_decrypt_time)
+print("Correct:", data == des3_plaintext)
+
+print("\nSecurity Analysis")
+print("----------------")
+print("DES  : 56-bit effective key; insecure.")
+print("3DES : Legacy and slow; deprecated for new applications.")
+print("AES  : Recommended modern replacement.")
