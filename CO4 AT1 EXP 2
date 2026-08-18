@@ -1,0 +1,67 @@
+# 2. IPSec Encapsulating Security Payload (ESP) Simulation
+# Encrypts and decrypts an IP packet payload.
+
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+import hashlib
+import base64
+
+KEY = hashlib.sha256(
+    b"ipsec_esp_secret_key"
+).digest()
+
+
+def encrypt_payload(payload):
+    cipher = AES.new(KEY, AES.MODE_GCM)
+
+    ciphertext, tag = cipher.encrypt_and_digest(
+        payload.encode()
+    )
+
+    return {
+        "nonce": base64.b64encode(cipher.nonce).decode(),
+        "ciphertext": base64.b64encode(ciphertext).decode(),
+        "tag": base64.b64encode(tag).decode()
+    }
+
+
+def decrypt_payload(esp_packet):
+    nonce = base64.b64decode(esp_packet["nonce"])
+    ciphertext = base64.b64decode(esp_packet["ciphertext"])
+    tag = base64.b64decode(esp_packet["tag"])
+
+    cipher = AES.new(
+        KEY,
+        AES.MODE_GCM,
+        nonce=nonce
+    )
+
+    plaintext = cipher.decrypt_and_verify(
+        ciphertext,
+        tag
+    )
+
+    return plaintext.decode()
+
+
+# Demonstration
+payload = "Confidential IPSec packet payload"
+
+print("Original Payload:")
+print(payload)
+
+esp_packet = encrypt_payload(payload)
+
+print("\nESP Encrypted Packet:")
+print("Nonce      :", esp_packet["nonce"])
+print("Ciphertext :", esp_packet["ciphertext"])
+print("Tag        :", esp_packet["tag"])
+
+try:
+    decrypted = decrypt_payload(esp_packet)
+
+    print("\nDecrypted Payload:")
+    print(decrypted)
+
+except ValueError:
+    print("Decryption failed: Data was modified.")
