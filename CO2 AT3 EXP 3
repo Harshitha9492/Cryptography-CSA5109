@@ -1,0 +1,103 @@
+# ============================================================
+# 2. PERFORMANCE ANALYSIS OF BLOCK CIPHER MODES
+# ============================================================
+# AES ECB, CBC, CFB and OFB
+# Install: pip install pycryptodome
+
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+import os
+import time
+
+
+BLOCK_SIZE = AES.block_size
+KEY = get_random_bytes(32)
+IV = get_random_bytes(BLOCK_SIZE)
+
+data = os.urandom(10 * 1024 * 1024)
+
+
+def encrypt_ecb(data):
+    cipher = AES.new(KEY, AES.MODE_ECB)
+    return cipher.encrypt(pad(data, BLOCK_SIZE))
+
+
+def decrypt_ecb(ciphertext):
+    cipher = AES.new(KEY, AES.MODE_ECB)
+    return unpad(cipher.decrypt(ciphertext), BLOCK_SIZE)
+
+
+def encrypt_cbc(data):
+    cipher = AES.new(KEY, AES.MODE_CBC, IV)
+    return cipher.encrypt(pad(data, BLOCK_SIZE))
+
+
+def decrypt_cbc(ciphertext):
+    cipher = AES.new(KEY, AES.MODE_CBC, IV)
+    return unpad(cipher.decrypt(ciphertext), BLOCK_SIZE)
+
+
+def encrypt_cfb(data):
+    cipher = AES.new(
+        KEY,
+        AES.MODE_CFB,
+        IV,
+        segment_size=128
+    )
+    return cipher.encrypt(data)
+
+
+def decrypt_cfb(ciphertext):
+    cipher = AES.new(
+        KEY,
+        AES.MODE_CFB,
+        IV,
+        segment_size=128
+    )
+    return cipher.decrypt(ciphertext)
+
+
+def encrypt_ofb(data):
+    cipher = AES.new(KEY, AES.MODE_OFB, IV)
+    return cipher.encrypt(data)
+
+
+def decrypt_ofb(ciphertext):
+    cipher = AES.new(KEY, AES.MODE_OFB, IV)
+    return cipher.decrypt(ciphertext)
+
+
+modes = [
+    ("ECB", encrypt_ecb, decrypt_ecb),
+    ("CBC", encrypt_cbc, decrypt_cbc),
+    ("CFB", encrypt_cfb, decrypt_cfb),
+    ("OFB", encrypt_ofb, decrypt_ofb)
+]
+
+print("DATA SIZE:", len(data), "bytes")
+print("=" * 70)
+
+for name, encrypt, decrypt in modes:
+
+    start = time.perf_counter()
+    ciphertext = encrypt(data)
+    encryption_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    plaintext = decrypt(ciphertext)
+    decryption_time = time.perf_counter() - start
+
+    print("\nMODE:", name)
+    print("Encryption Time:", encryption_time)
+    print("Decryption Time:", decryption_time)
+    print("Ciphertext Size :", len(ciphertext))
+    print("Correct         :", plaintext == data)
+
+print("\nMODE ANALYSIS")
+print("-------------")
+print("ECB : No IV, but leaks patterns and should not be used.")
+print("CBC : Requires unpredictable IV and padding.")
+print("CFB : Stream-like mode; no padding required.")
+print("OFB : Stream-like mode; no padding required.")
+print("GCM : Recommended modern choice because it provides encryption + authentication.")
