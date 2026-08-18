@@ -1,0 +1,42 @@
+from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA256
+
+# Generate RSA key pair
+key = RSA.generate(2048)
+
+private_key = key
+public_key = key.publickey()
+
+# Message
+message = b"This is a secure message."
+
+# Create SHA-256 hash
+digest = SHA256.new(message)
+
+# Sign the message
+signature = pkcs1_15.new(private_key).sign(digest)
+
+print("Original Message:")
+print(message.decode())
+
+print("\nDigital Signature:")
+print(signature.hex())
+
+# Verify signature
+try:
+    digest = SHA256.new(message)
+    pkcs1_15.new(public_key).verify(digest, signature)
+    print("\nVerification: Signature is VALID")
+except (ValueError, TypeError):
+    print("\nVerification: Signature is INVALID")
+
+# Test modified message
+modified_message = b"This is a modified message."
+
+try:
+    digest = SHA256.new(modified_message)
+    pkcs1_15.new(public_key).verify(digest, signature)
+    print("Modified message: Signature is VALID")
+except (ValueError, TypeError):
+    print("Modified message: Signature is INVALID")
