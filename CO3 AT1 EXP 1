@@ -1,0 +1,42 @@
+import hashlib
+import time
+
+messages = [
+    "Hello World",
+    "Cryptography",
+    "The quick brown fox jumps over the lazy dog",
+    "1234567890",
+    "Secure Communication"
+]
+
+print("=" * 110)
+print(f"{'MESSAGE':45} {'MD5':35} {'SHA-256':64}")
+print("=" * 110)
+
+for message in messages:
+    data = message.encode()
+
+    # MD5
+    start = time.perf_counter()
+    md5_hash = hashlib.md5(data).hexdigest()
+    md5_time = time.perf_counter() - start
+
+    # SHA-256
+    start = time.perf_counter()
+    sha256_hash = hashlib.sha256(data).hexdigest()
+    sha256_time = time.perf_counter() - start
+
+    print(f"{message[:43]:45} {md5_hash:35} {sha256_hash}")
+
+    print(f"   MD5 Time     : {md5_time * 1000000:.3f} microseconds")
+    print(f"   SHA-256 Time : {sha256_time * 1000000:.3f} microseconds")
+    print()
+
+print("=" * 110)
+
+print("\nSecurity Analysis")
+print("------------------")
+print("MD5 digest size    : 128 bits")
+print("SHA-256 digest size: 256 bits")
+print("MD5 Status         : Cryptographically broken")
+print("SHA-256 Status     : Currently considered secure for general hashing")
