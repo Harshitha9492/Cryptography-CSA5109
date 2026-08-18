@@ -1,0 +1,250 @@
+# 5. Email Spam Classification
+# Uses email header analysis and content-based filtering.
+
+import re
+from collections import Counter
+
+
+SPAM_WORDS = {
+    "free",
+    "winner",
+    "win",
+    "prize",
+    "offer",
+    "urgent",
+    "money",
+    "cash",
+    "bonus",
+    "click",
+    "buy",
+    "discount",
+    "lottery",
+    "congratulations",
+    "claim",
+    "limited",
+    "credit",
+    "investment",
+    "password",
+    "verify"
+}
+
+SUSPICIOUS_DOMAINS = {
+    "spam.com",
+    "fakeoffer.com",
+    "unknownsender.com",
+    "phishing.com"
+}
+
+
+def extract_email_data(email):
+    lines = email.splitlines()
+
+    headers = {}
+    body_lines = []
+    in_body = False
+
+    for line in lines:
+
+        if line.strip() == "":
+            in_body = True
+            continue
+
+        if not in_body and ":" in line:
+            key, value = line.split(":", 1)
+            headers[key.strip().lower()] = value.strip()
+        else:
+            body_lines.append(line)
+
+    body = " ".join(body_lines)
+
+    return headers, body
+
+
+def classify_email(email):
+    headers, body = extract_email_data(email)
+
+    score = 0
+    reasons = []
+
+    # --------------------------------
+    # Subject analysis
+    # --------------------------------
+
+    subject = headers.get("subject", "").lower()
+
+    subject_words = re.findall(
+        r"\b[a-zA-Z]+\b",
+        subject
+    )
+
+    for word in subject_words:
+        if word in SPAM_WORDS:
+            score += 2
+            reasons.append(
+                f"Spam word in subject: {word}"
+            )
+
+    # --------------------------------
+    # Sender analysis
+    # --------------------------------
+
+    sender = headers.get(
+        "from",
+        ""
+    ).lower()
+
+    for domain in SUSPICIOUS_DOMAINS:
+        if domain in sender:
+            score += 3
+            reasons.append(
+                f"Suspicious sender domain: {domain}"
+            )
+
+    # --------------------------------
+    # Reply-To analysis
+    # --------------------------------
+
+    reply_to = headers.get(
+        "reply-to",
+        ""
+    ).lower()
+
+    if reply_to and reply_to != sender:
+        score += 2
+        reasons.append(
+            "Reply-To differs from sender"
+        )
+
+    # --------------------------------
+    # Body analysis
+    # --------------------------------
+
+    words = re.findall(
+        r"\b[a-zA-Z]+\b",
+        body.lower()
+    )
+
+    word_count = Counter(words)
+
+    for word, count in word_count.items():
+        if word in SPAM_WORDS:
+            score += count
+
+            reasons.append(
+                f"Spam keyword detected: {word}"
+            )
+
+    # --------------------------------
+    # URL analysis
+    # --------------------------------
+
+    urls = re.findall(
+        r"https?://\S+",
+        body.lower()
+    )
+
+    if len(urls) >= 3:
+        score += 3
+        reasons.append(
+            "Large number of URLs detected"
+        )
+
+    # --------------------------------
+    # HTML/script analysis
+    # --------------------------------
+
+    if re.search(
+        r"<script|javascript:",
+        body.lower()
+    ):
+        score += 5
+        reasons.append(
+            "Suspicious script content detected"
+        )
+
+    # --------------------------------
+    # Final classification
+    # --------------------------------
+
+    if score >= 5:
+        classification = "SPAM"
+    else:
+        classification = "LEGITIMATE"
+
+    return classification, score, reasons
+
+
+# ------------------------------------------------
+# Test Email 1
+# ------------------------------------------------
+
+email1 = """From: friend@example.com
+To: user@example.com
+Subject: Meeting tomorrow
+Date: Tue, 18 Aug 2026 10:00:00
+Reply-To: friend@example.com
+
+Hello,
+The meeting is scheduled for tomorrow at 10 AM.
+Please bring the project report.
+Thank you.
+"""
+
+
+# ------------------------------------------------
+# Test Email 2
+# ------------------------------------------------
+
+email2 = """From: winner@spam.com
+To: user@example.com
+Subject: Congratulations! You are a winner - Claim your FREE prize
+Date: Tue, 18 Aug 2026 10:00:00
+Reply-To: claim@fakeoffer.com
+
+Congratulations!
+
+You are a WINNER!
+
+Claim your FREE prize now.
+Click here:
+http://spam.com/prize
+
+You have won FREE CASH and a BONUS.
+Limited offer. Claim your money immediately.
+"""
+
+
+# ------------------------------------------------
+# Classification Function
+# ------------------------------------------------
+
+def test_email(email, number):
+
+    classification, score, reasons = classify_email(
+        email
+    )
+
+    print("=" * 60)
+    print("EMAIL", number)
+    print("=" * 60)
+
+    headers, body = extract_email_data(email)
+
+    print("From   :", headers.get("from", ""))
+    print("Subject:", headers.get("subject", ""))
+
+    print("\nClassification:", classification)
+    print("Spam Score    :", score)
+
+    print("\nReasons:")
+
+    if reasons:
+        for reason in set(reasons):
+            print("-", reason)
+    else:
+        print("- No suspicious indicators found")
+
+
+# Run classification
+test_email(email1, 1)
+test_email(email2, 2)
