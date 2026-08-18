@@ -1,0 +1,174 @@
+import hashlib
+import hmac
+import time
+
+# ------------------------------------------------
+# Utility function
+# ------------------------------------------------
+
+def create_token(key, data):
+    return hmac.new(
+        key.encode(),
+        data.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+
+# ------------------------------------------------
+# Keys
+# ------------------------------------------------
+
+client_key = "client_secret"
+tgs_key = "tgs_secret"
+server_key = "server_secret"
+
+
+# ------------------------------------------------
+# Authentication Server
+# ------------------------------------------------
+
+def authentication_server(client_id):
+    timestamp = str(int(time.time()))
+
+    data = client_id + "|" + timestamp
+
+    ticket = create_token(client_key, data)
+
+    return {
+        "client_id": client_id,
+        "timestamp": timestamp,
+        "ticket": ticket
+    }
+
+
+# ------------------------------------------------
+# Ticket Granting Server
+# ------------------------------------------------
+
+def ticket_granting_server(tgt, service_id):
+
+    client_id = tgt["client_id"]
+    timestamp = tgt["timestamp"]
+    ticket = tgt["ticket"]
+
+    # Validate TGT
+    expected_ticket = create_token(
+        client_key,
+        client_id + "|" + timestamp
+    )
+
+    if not hmac.compare_digest(ticket, expected_ticket):
+        return None
+
+    # Check ticket lifetime
+    current_time = int(time.time())
+
+    if current_time - int(timestamp) > 30:
+        print("TGT expired")
+        return None
+
+    # Generate service ticket
+    service_data = (
+        client_id + "|" +
+        service_id + "|" +
+        str(current_time)
+    )
+
+    service_ticket = create_token(
+        server_key,
+        service_data
+    )
+
+    return {
+        "client_id": client_id,
+        "service_id": service_id,
+        "timestamp": str(current_time),
+        "ticket": service_ticket
+    }
+
+
+# ------------------------------------------------
+# Service Server
+# ------------------------------------------------
+
+def service_server(service_ticket):
+
+    client_id = service_ticket["client_id"]
+    service_id = service_ticket["service_id"]
+    timestamp = service_ticket["timestamp"]
+    ticket = service_ticket["ticket"]
+
+    # Recreate expected ticket
+    data = (
+        client_id + "|" +
+        service_id + "|" +
+        timestamp
+    )
+
+    expected_ticket = create_token(
+        server_key,
+        data
+    )
+
+    if not hmac.compare_digest(ticket, expected_ticket):
+        return False
+
+    # Check timestamp
+    current_time = int(time.time())
+
+    if current_time - int(timestamp) > 30:
+        return False
+
+    return True
+
+
+# ------------------------------------------------
+# Simulation
+# ------------------------------------------------
+
+client_id = "user1"
+service_id = "file_server"
+
+print("Client requesting Ticket Granting Ticket...")
+
+tgt = authentication_server(client_id)
+
+print("TGT generated successfully.")
+
+print("\nClient requesting Service Ticket...")
+
+service_ticket = ticket_granting_server(
+    tgt,
+    service_id
+)
+
+if service_ticket is None:
+    print("Service ticket generation failed.")
+    exit()
+
+print("Service ticket generated successfully.")
+
+print("\nClient accessing server...")
+
+if service_server(service_ticket):
+    print("Access Granted")
+else:
+    print("Access Denied")
+
+
+# ------------------------------------------------
+# Replay attack simulation
+# ------------------------------------------------
+
+print("\nTesting expired/replayed ticket...")
+
+# Simulate old ticket
+old_ticket = service_ticket.copy()
+old_ticket["timestamp"] = str(
+    int(time.time()) - 60
+)
+
+if service_server(old_ticket):
+    print("Replay attack succeeded")
+else:
+    print("Replay attack prevented")
