@@ -1,0 +1,144 @@
+import hashlib
+import random
+import math
+
+
+# ------------------------------------------------
+# ElGamal Parameters
+# ------------------------------------------------
+
+p = 467          # prime number
+g = 2            # generator
+
+
+# ------------------------------------------------
+# Key Generation
+# ------------------------------------------------
+
+private_key = random.randint(2, p - 2)
+
+public_key = pow(
+    g,
+    private_key,
+    p
+)
+
+print("ElGamal Parameters")
+print("-------------------")
+print("p =", p)
+print("g =", g)
+
+print("\nPrivate Key:", private_key)
+print("Public Key :", public_key)
+
+
+# ------------------------------------------------
+# Hash Function
+# ------------------------------------------------
+
+def hash_message(message):
+    digest = hashlib.sha256(
+        message.encode()
+    ).hexdigest()
+
+    return int(digest, 16) % (p - 1)
+
+
+# ------------------------------------------------
+# Modular Inverse
+# ------------------------------------------------
+
+def modular_inverse(a, m):
+    return pow(a, -1, m)
+
+
+# ------------------------------------------------
+# Signing
+# ------------------------------------------------
+
+def sign(message):
+
+    h = hash_message(message)
+
+    # k must be relatively prime to p-1
+    while True:
+        k = random.randint(2, p - 2)
+
+        if math.gcd(k, p - 1) == 1:
+            break
+
+    r = pow(g, k, p)
+
+    k_inverse = modular_inverse(
+        k,
+        p - 1
+    )
+
+    s = (
+        k_inverse *
+        (h - private_key * r)
+    ) % (p - 1)
+
+    return r, s
+
+
+# ------------------------------------------------
+# Verification
+# ------------------------------------------------
+
+def verify(message, signature):
+
+    r, s = signature
+
+    if not (0 < r < p):
+        return False
+
+    h = hash_message(message)
+
+    left = (
+        pow(public_key, r, p) *
+        pow(r, s, p)
+    ) % p
+
+    right = pow(
+        g,
+        h,
+        p
+    )
+
+    return left == right
+
+
+# ------------------------------------------------
+# Demonstration
+# ------------------------------------------------
+
+message = "This is an ElGamal signed message."
+
+signature = sign(message)
+
+print("\nMessage:")
+print(message)
+
+print("\nDigital Signature:")
+print("r =", signature[0])
+print("s =", signature[1])
+
+print("\nSignature Verification:")
+
+if verify(message, signature):
+    print("VALID")
+else:
+    print("INVALID")
+
+
+# Test modified message
+
+modified_message = "This is a modified message."
+
+print("\nModified Message Verification:")
+
+if verify(modified_message, signature):
+    print("VALID")
+else:
+    print("INVALID")
