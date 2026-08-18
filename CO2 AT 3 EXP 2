@@ -1,0 +1,171 @@
+# ============================================================
+# 3. DEBUGGING RSA CRYPTOSYSTEM
+# ============================================================
+# Educational RSA implementation
+# Demonstrates:
+# - Prime generation
+# - Key generation
+# - Fast modular exponentiation
+# - Message block handling
+# - CRT optimization during decryption
+#
+# Install: pip install sympy
+
+import random
+import math
+import time
+from sympy import nextprime
+
+
+def generate_prime(bits=512):
+    start = random.getrandbits(bits)
+    start |= (1 << (bits - 1))
+    start |= 1
+    return int(nextprime(start))
+
+
+def generate_keys(bits=1024):
+
+    p = generate_prime(bits // 2)
+    q = generate_prime(bits // 2)
+
+    while p == q:
+        q = generate_prime(bits // 2)
+
+    n = p * q
+    phi = (p - 1) * (q - 1)
+
+    e = 65537
+
+    while math.gcd(e, phi) != 1:
+        e += 2
+
+    d = pow(e, -1, phi)
+
+    # CRT parameters
+    dp = d % (p - 1)
+    dq = d % (q - 1)
+    qinv = pow(q, -1, p)
+
+    public_key = (e, n)
+
+    private_key = (
+        d,
+        p,
+        q,
+        dp,
+        dq,
+        qinv
+    )
+
+    return public_key, private_key
+
+
+def rsa_encrypt(message, public_key):
+    e, n = public_key
+
+    message_int = int.from_bytes(
+        message,
+        byteorder="big"
+    )
+
+    if message_int >= n:
+        raise ValueError(
+            "Message too large for RSA block"
+        )
+
+    ciphertext = pow(
+        message_int,
+        e,
+        n
+    )
+
+    return ciphertext
+
+
+def rsa_decrypt_crt(ciphertext, private_key):
+    d, p, q, dp, dq, qinv = private_key
+
+    # CRT optimized RSA decryption
+    m1 = pow(ciphertext, dp, p)
+    m2 = pow(ciphertext, dq, q)
+
+    h = (qinv * (m1 - m2)) % p
+
+    message_int = m2 + h * q
+
+    return message_int
+
+
+def rsa_decrypt(ciphertext, private_key):
+    message_int = rsa_decrypt_crt(
+        ciphertext,
+        private_key
+    )
+
+    length = max(
+        1,
+        (message_int.bit_length() + 7) // 8
+    )
+
+    return message_int.to_bytes(
+        length,
+        byteorder="big"
+    )
+
+
+# Generate keys
+print("Generating RSA keys...")
+
+start = time.perf_counter()
+public_key, private_key = generate_keys(1024)
+key_generation_time = time.perf_counter() - start
+
+print("Key generation time:", key_generation_time)
+
+message = b"RSA encryption test message"
+
+print("\nOriginal Message:")
+print(message.decode())
+
+# Encryption
+start = time.perf_counter()
+
+ciphertext = rsa_encrypt(
+    message,
+    public_key
+)
+
+encryption_time = time.perf_counter() - start
+
+print("\nCiphertext:")
+print(ciphertext)
+
+# Decryption
+start = time.perf_counter()
+
+plaintext = rsa_decrypt(
+    ciphertext,
+    private_key
+)
+
+decryption_time = time.perf_counter() - start
+
+print("\nDecrypted Message:")
+print(plaintext.decode())
+
+print("\nCorrect:", message == plaintext)
+
+print("\nPerformance")
+print("-----------")
+print("Encryption:", encryption_time)
+print("CRT Decryption:", decryption_time)
+
+print("\nRSA Key Size Analysis")
+print("---------------------")
+print("512-bit  : Insecure")
+print("1024-bit : Legacy / not recommended for modern security")
+print("2048-bit : Common minimum for RSA applications")
+print("3072-bit : Stronger security with greater computation")
+print("4096-bit : Higher security but slower")
+print("\nFor production, use RSA-OAEP through a trusted cryptographic library.")
