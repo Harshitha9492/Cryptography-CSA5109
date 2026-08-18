@@ -1,0 +1,59 @@
+import hashlib
+import hmac
+
+# Secret key
+key = b"my_secret_key"
+
+# Original message
+message = b"Important transaction data"
+
+# -------------------------
+# HMAC-SHA256
+# -------------------------
+hmac_value = hmac.new(
+    key,
+    message,
+    hashlib.sha256
+).hexdigest()
+
+# -------------------------
+# Simple SHA-256
+# -------------------------
+simple_hash = hashlib.sha256(message).hexdigest()
+
+print("Original Message:")
+print(message.decode())
+
+print("\nHMAC-SHA256:")
+print(hmac_value)
+
+print("\nSimple SHA-256 Hash:")
+print(simple_hash)
+
+# Verify HMAC
+received_message = b"Important transaction data"
+
+received_hmac = hmac.new(
+    key,
+    received_message,
+    hashlib.sha256
+).hexdigest()
+
+if hmac.compare_digest(hmac_value, received_hmac):
+    print("\nHMAC Verification: VALID")
+else:
+    print("\nHMAC Verification: INVALID")
+
+# Modify message
+modified_message = b"Modified transaction data"
+
+modified_hmac = hmac.new(
+    key,
+    modified_message,
+    hashlib.sha256
+).hexdigest()
+
+if hmac.compare_digest(hmac_value, modified_hmac):
+    print("Modified Message: VALID")
+else:
+    print("Modified Message: INVALID")
