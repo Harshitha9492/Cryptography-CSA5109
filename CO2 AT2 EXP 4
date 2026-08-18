@@ -1,0 +1,198 @@
+# ============================================================
+# 4. OPTIMIZED DIFFIE-HELLMAN WITH MITM MITIGATION
+# ============================================================
+# Demonstrates:
+# - Correct modular arithmetic
+# - Fast modular exponentiation
+# - Shared-secret generation
+# - Authentication using HMAC
+# - Detection of modified public values
+#
+# Educational simplified authenticated DH demonstration.
+
+import secrets
+import hashlib
+import hmac
+import time
+
+
+# Large demonstration prime
+P = int(
+    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
+    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
+    "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
+    "E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
+    "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3D"
+    "C2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F"
+    "83655D23DCA3AD961C62F356208552BB9ED529077096966D"
+    "670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
+    "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9"
+    "DE2BCBF6955817183995497CEA956AE515D2261898FA0510"
+    "15728E5A8AACAA68FFFFFFFFFFFFFFFF",
+    16
+)
+
+G = 2
+
+
+def generate_private_key():
+    return secrets.randbelow(P - 2) + 2
+
+
+def generate_public_key(private_key):
+    return pow(G, private_key, P)
+
+
+def generate_shared_key(
+    private_key,
+    other_public_key
+):
+    shared = pow(
+        other_public_key,
+        private_key,
+        P
+    )
+
+    return hashlib.sha256(
+        shared.to_bytes(
+            (shared.bit_length() + 7) // 8,
+            "big"
+        )
+    ).digest()
+
+
+def authenticate_public_key(
+    public_key,
+    authentication_key
+):
+    data = str(public_key).encode()
+
+    return hmac.new(
+        authentication_key,
+        data,
+        hashlib.sha256
+    ).hexdigest()
+
+
+def verify_public_key(
+    public_key,
+    received_tag,
+    authentication_key
+):
+    expected = authenticate_public_key(
+        public_key,
+        authentication_key
+    )
+
+    return hmac.compare_digest(
+        expected,
+        received_tag
+    )
+
+
+# Shared authentication key
+# In a real system this would be replaced by certificates,
+# signatures, or another authenticated key-establishment method.
+authentication_key = b"pre_shared_authentication_key"
+
+
+# Alice
+alice_private = generate_private_key()
+alice_public = generate_public_key(alice_private)
+
+# Bob
+bob_private = generate_private_key()
+bob_public = generate_public_key(bob_private)
+
+
+# Authenticate exchanged public values
+alice_tag = authenticate_public_key(
+    alice_public,
+    authentication_key
+)
+
+bob_tag = authenticate_public_key(
+    bob_public,
+    authentication_key
+)
+
+
+print("Alice Public Key:", alice_public)
+print("Bob Public Key  :", bob_public)
+
+
+if not verify_public_key(
+    alice_public,
+    alice_tag,
+    authentication_key
+):
+    raise ValueError("Alice authentication failed")
+
+if not verify_public_key(
+    bob_public,
+    bob_tag,
+    authentication_key
+):
+    raise ValueError("Bob authentication failed")
+
+
+# Generate shared secrets
+start = time.perf_counter()
+
+alice_shared = generate_shared_key(
+    alice_private,
+    bob_public
+)
+
+alice_time = time.perf_counter() - start
+
+
+start = time.perf_counter()
+
+bob_shared = generate_shared_key(
+    bob_private,
+    alice_public
+)
+
+bob_time = time.perf_counter() - start
+
+
+print("\nAlice Shared Key:")
+print(alice_shared.hex())
+
+print("\nBob Shared Key:")
+print(bob_shared.hex())
+
+print("\nShared Keys Match:",
+      alice_shared == bob_shared)
+
+print("\nPerformance")
+print("Alice computation:", alice_time)
+print("Bob computation  :", bob_time)
+
+
+# MITM / tampering test
+print("\nMITM/Tampering Test")
+
+fake_public = generate_public_key(
+    generate_private_key()
+)
+
+fake_tag = authenticate_public_key(
+    fake_public,
+    b"wrong_key"
+)
+
+if verify_public_key(
+    fake_public,
+    fake_tag,
+    authentication_key
+):
+    print("Fake public key accepted")
+else:
+    print("Fake public key rejected")
+
+print("\nSecurity:")
+print("Unauthenticated DH is vulnerable to MITM attacks.")
+print("Authentication using signatures/certificates or a trusted")
+print("pre-shared authentication mechanism is required in practice.")
