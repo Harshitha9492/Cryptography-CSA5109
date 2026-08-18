@@ -1,0 +1,343 @@
+# ============================================================
+# 5. DEBUGGING & OPTIMIZATION OF ECC
+# ============================================================
+# Educational elliptic-curve implementation
+# Demonstrates:
+# - Correct point addition
+# - Point doubling
+# - Point at infinity
+# - Modular inverse
+# - Double-and-add scalar multiplication
+# - ECDH shared-key generation
+#
+# Curve:
+# y^2 = x^3 + ax + b (mod p)
+
+import hashlib
+
+
+# Small curve for demonstration only
+P = 9739
+A = 497
+B = 1768
+
+
+# Point at infinity
+INFINITY = None
+
+
+def is_on_curve(point):
+    if point is None:
+        return True
+
+    x, y = point
+
+    left = (y * y) % P
+
+    right = (
+        x * x * x
+        + A * x
+        + B
+    ) % P
+
+    return left == right
+
+
+def modular_inverse(k):
+    k %= P
+
+    if k == 0:
+        raise ZeroDivisionError(
+            "No modular inverse"
+        )
+
+    return pow(k, P - 2, P)
+
+
+def point_add(P1, P2):
+
+    # P + infinity = P
+    if P1 is None:
+        return P2
+
+    # infinity + P = P
+    if P2 is None:
+        return P1
+
+    x1, y1 = P1
+    x2, y2 = P2
+
+    # P + (-P) = infinity
+    if x1 == x2 and (y1 + y2) % P == 0:
+        return None
+
+    # Point doubling
+    if P1 == P2:
+
+        if y1 % P == 0:
+            return None
+
+        numerator = (
+            3 * x1 * x1 + A
+        ) % P
+
+        denominator = (
+            2 * y1
+        ) % P
+
+    # Ordinary point addition
+    else:
+
+        numerator = (
+            y2 - y1
+        ) % P
+
+        denominator = (
+            x2 - x1
+        ) % P
+
+    slope = (
+        numerator *
+        modular_inverse(denominator)
+    ) % P
+
+    x3 = (
+        slope * slope
+        - x1
+        - x2
+    ) % P
+
+    y3 = (
+        slope * (x1 - x3)
+        - y1
+    ) % P
+
+    result = (x3, y3)
+
+    if not is_on_curve(result):
+        raise ValueError(
+            "Point addition error"
+        )
+
+    return result
+
+
+def scalar_multiply(k, point):
+
+    if k == 0 or point is None:
+        return None
+
+    if k < 0:
+        raise ValueError(
+            "Scalar must be positive"
+        )
+
+    result = None
+    current = point
+
+    # Double-and-add optimization
+    while k > 0:
+
+        if k & 1:
+            result = point_add(
+                result,
+                current
+            )
+
+        current = point_add(
+            current,
+            current
+        )
+
+        k >>= 1
+
+    return result
+
+
+def generate_private_key():
+    # Small value only for demonstration
+    return 1234
+
+
+def derive_key(shared_point):
+    if shared_point is None:
+        raise ValueError(
+            "Invalid shared point"
+        )
+
+    x, y = shared_point
+
+    data = (
+        str(x) + ":" + str(y)
+    ).encode()
+
+    return hashlib.sha256(data).hexdigest()
+
+
+# ------------------------------------------------------------
+# Find a valid base point
+# ------------------------------------------------------------
+
+G = None
+
+for x in range(1, P):
+
+    rhs = (
+        x ** 3
+        + A * x
+        + B
+    ) % P
+
+    for y in range(1, P):
+
+        if (y * y) % P == rhs:
+            G = (x, y)
+            break
+
+    if G is not None:
+        break
+
+
+print("Elliptic Curve")
+print("--------------")
+print("p =", P)
+print("a =", A)
+print("b =", B)
+print("Base Point G =", G)
+
+print("\nBase Point On Curve:",
+      is_on_curve(G))
+
+
+# ------------------------------------------------------------
+# Alice key generation
+# ------------------------------------------------------------
+
+alice_private = 123
+alice_public = scalar_multiply(
+    alice_private,
+    G
+)
+
+
+# ------------------------------------------------------------
+# Bob key generation
+# ------------------------------------------------------------
+
+bob_private = 456
+bob_public = scalar_multiply(
+    bob_private,
+    G
+)
+
+
+print("\nAlice Private Key:", alice_private)
+print("Alice Public Key :", alice_public)
+
+print("\nBob Private Key:", bob_private)
+print("Bob Public Key :", bob_public)
+
+
+# ------------------------------------------------------------
+# ECDH Shared Secret
+# ------------------------------------------------------------
+
+alice_shared = scalar_multiply(
+    alice_private,
+    bob_public
+)
+
+bob_shared = scalar_multiply(
+    bob_private,
+    alice_public
+)
+
+
+print("\nAlice Shared Point:")
+print(alice_shared)
+
+print("\nBob Shared Point:")
+print(bob_shared)
+
+print("\nShared Points Match:",
+      alice_shared == bob_shared)
+
+
+# ------------------------------------------------------------
+# Derived symmetric key
+# ------------------------------------------------------------
+
+if alice_shared == bob_shared:
+
+    alice_key = derive_key(
+        alice_shared
+    )
+
+    bob_key = derive_key(
+        bob_shared
+    )
+
+    print("\nAlice Derived Key:")
+    print(alice_key)
+
+    print("\nBob Derived Key:")
+    print(bob_key)
+
+    print("\nKeys Match:",
+          alice_key == bob_key)
+
+
+# ------------------------------------------------------------
+# Point addition tests
+# ------------------------------------------------------------
+
+print("\nECC Point Addition Tests")
+print("------------------------")
+
+P1 = scalar_multiply(
+    10,
+    G
+)
+
+P2 = scalar_multiply(
+    20,
+    G
+)
+
+P3 = point_add(P1, P2)
+
+print("10G =", P1)
+print("20G =", P2)
+print("10G + 20G =", P3)
+
+print("\nVerification:")
+
+expected = scalar_multiply(
+    30,
+    G
+)
+
+print("30G =", expected)
+print("Correct:", P3 == expected)
+
+
+# ------------------------------------------------------------
+# Scalar multiplication correctness
+# ------------------------------------------------------------
+
+print("\nScalar Multiplication Test")
+
+for k in [1, 2, 5, 10, 20, 50]:
+
+    result = scalar_multiply(
+        k,
+        G
+    )
+
+    print(
+        f"{k}G = {result}"
+    )
+
+print("\nOptimization Used:")
+print("Double-and-add scalar multiplication.")
+print("Time complexity: O(log k) point operations.")
