@@ -1,0 +1,118 @@
+# 3. IPSec Security Association (SA) Management
+# Supports creation, lookup, and deletion of Security Associations.
+
+import secrets
+
+
+class SecurityAssociation:
+    def __init__(
+        self,
+        spi,
+        source,
+        destination,
+        protocol,
+        encryption_algorithm
+    ):
+        self.spi = spi
+        self.source = source
+        self.destination = destination
+        self.protocol = protocol
+        self.encryption_algorithm = encryption_algorithm
+
+    def display(self):
+        print("SPI                :", self.spi)
+        print("Source             :", self.source)
+        print("Destination        :", self.destination)
+        print("Protocol           :", self.protocol)
+        print("Encryption         :", self.encryption_algorithm)
+
+
+class SAManager:
+    def __init__(self):
+        self.database = {}
+
+    def create_sa(
+        self,
+        source,
+        destination,
+        protocol="ESP",
+        encryption_algorithm="AES-GCM"
+    ):
+        spi = secrets.randbits(32)
+
+        while spi in self.database:
+            spi = secrets.randbits(32)
+
+        sa = SecurityAssociation(
+            spi,
+            source,
+            destination,
+            protocol,
+            encryption_algorithm
+        )
+
+        self.database[spi] = sa
+
+        print("\nSecurity Association Created")
+        sa.display()
+
+        return spi
+
+    def lookup_sa(self, spi):
+        print("\nLooking up SPI:", spi)
+
+        if spi in self.database:
+            print("Security Association Found:")
+            self.database[spi].display()
+            return self.database[spi]
+
+        print("Security Association Not Found")
+        return None
+
+    def delete_sa(self, spi):
+        print("\nDeleting SPI:", spi)
+
+        if spi in self.database:
+            del self.database[spi]
+            print("Security Association Deleted")
+            return True
+
+        print("Security Association Not Found")
+        return False
+
+    def list_sa(self):
+        print("\nCurrent Security Associations:")
+
+        if not self.database:
+            print("No Security Associations")
+            return
+
+        for spi, sa in self.database.items():
+            print("\nSPI:", spi)
+            sa.display()
+
+
+# Demonstration
+manager = SAManager()
+
+spi1 = manager.create_sa(
+    "192.168.1.10",
+    "192.168.1.20",
+    "ESP",
+    "AES-GCM"
+)
+
+spi2 = manager.create_sa(
+    "10.0.0.10",
+    "10.0.0.20",
+    "AH",
+    "HMAC-SHA256"
+)
+
+manager.list_sa()
+
+manager.lookup_sa(spi1)
+
+manager.delete_sa(spi1)
+
+manager.list_sa()
