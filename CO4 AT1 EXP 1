@@ -1,0 +1,60 @@
+# 1. IPSec Authentication Header (AH) Simulation
+# Generates and verifies a MAC for IP packet integrity.
+
+import hmac
+import hashlib
+
+SECRET_KEY = b"ipsec_ah_secret_key"
+
+
+def create_ah(packet):
+    mac = hmac.new(
+        SECRET_KEY,
+        packet.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return {
+        "packet": packet,
+        "authentication_data": mac
+    }
+
+
+def verify_ah(ah_packet):
+    packet = ah_packet["packet"]
+    received_mac = ah_packet["authentication_data"]
+
+    expected_mac = hmac.new(
+        SECRET_KEY,
+        packet.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(received_mac, expected_mac)
+
+
+# Demonstration
+packet = "SRC=192.168.1.10;DST=192.168.1.20;DATA=Hello IPSec"
+
+ah_packet = create_ah(packet)
+
+print("Original Packet:")
+print(packet)
+
+print("\nAH Authentication Data:")
+print(ah_packet["authentication_data"])
+
+if verify_ah(ah_packet):
+    print("\nVerification: Packet is authentic and intact.")
+else:
+    print("\nVerification: Packet has been modified.")
+
+# Tampering test
+ah_packet["packet"] = "SRC=192.168.1.10;DST=192.168.1.20;DATA=Modified"
+
+print("\nAfter Packet Modification:")
+
+if verify_ah(ah_packet):
+    print("Verification: Packet is authentic.")
+else:
+    print("Verification: Packet modification detected.")
