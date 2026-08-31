@@ -1,0 +1,55 @@
+print("===== FIREWALL RULE ENGINE =====")
+
+# Firewall rules
+rules = [
+    {
+        "ip": "192.168.1.10",
+        "port": 80,
+        "protocol": "TCP",
+        "action": "ALLOW"
+    },
+    {
+        "ip": "192.168.1.20",
+        "port": 22,
+        "protocol": "TCP",
+        "action": "BLOCK"
+    },
+    {
+        "ip": "10.0.0.5",
+        "port": 443,
+        "protocol": "TCP",
+        "action": "ALLOW"
+    }
+]
+
+
+def firewall(packet):
+    for rule in rules:
+
+        if (packet["ip"] == rule["ip"] and
+            packet["port"] == rule["port"] and
+            packet["protocol"] == rule["protocol"]):
+
+            return rule["action"]
+
+    return "BLOCK"
+
+
+# Incoming packet
+packet = {
+    "ip": input("Enter source IP: "),
+    "port": int(input("Enter port number: ")),
+    "protocol": input("Enter protocol (TCP/UDP): ").upper()
+}
+
+decision = firewall(packet)
+
+print("\nSource IP:", packet["ip"])
+print("Port:", packet["port"])
+print("Protocol:", packet["protocol"])
+print("Firewall Decision:", decision)
+
+if decision == "ALLOW":
+    print("Packet is allowed.")
+else:
+    print("Packet is blocked.")
