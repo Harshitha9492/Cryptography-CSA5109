@@ -1,0 +1,43 @@
+print("===== MALWARE BEHAVIOR CLASSIFIER =====")
+
+propagation = input(
+    "Propagation method (file/network/none): "
+).lower()
+
+file_modification = input(
+    "Does it modify or attach to files? (yes/no): "
+).lower()
+
+user_interaction = input(
+    "Does it require user interaction? (yes/no): "
+).lower()
+
+
+# Classification
+if propagation == "file" and file_modification == "yes":
+    malware_type = "VIRUS"
+
+elif propagation == "network" and user_interaction == "no":
+    malware_type = "WORM"
+
+elif propagation == "none" and user_interaction == "yes":
+    malware_type = "TROJAN"
+
+else:
+    malware_type = "UNKNOWN"
+
+
+print("\n===== RESULT =====")
+print("Malware Type:", malware_type)
+
+if malware_type == "VIRUS":
+    print("Behavior: Attaches to or modifies files.")
+
+elif malware_type == "WORM":
+    print("Behavior: Spreads automatically through the network.")
+
+elif malware_type == "TROJAN":
+    print("Behavior: Disguises itself as legitimate software.")
+
+else:
+    print("Behavior does not match the simplified rules.")
