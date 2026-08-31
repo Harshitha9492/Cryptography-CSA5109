@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EHR Hash & Signature Security</title>
+    <meta
+      name="description"
+      content="Evaluation of cryptographic hash functions and digital signatures in electronic health record security."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav">
+        <div class="brand">
+          <span class="brand-mark">E</span>
+          <span>EHR Secure Exchange</span>
+        </div>
+        <nav>
+          <a href="#overview">Overview</a>
+          <a href="#comparison">Comparison</a>
+          <a href="#demo">Demo</a>
+          <a href="#recommendation">Recommendation</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container hero-grid">
+          <div>
+            <p class="eyebrow">Telemedicine Security Analysis</p>
+            <h1>Evaluation of Cryptographic Hash Functions and Digital Signatures in Electronic Health Record Security</h1>
+            <p class="lead">
+              A healthcare network must preserve EHR integrity, verify provider identity,
+              and establish non-repudiation for diagnoses, prescriptions, lab reports,
+              and insurance exchanges.
+            </p>
+            <div class="cta-row">
+              <a class="primary-btn" href="#demo">View Demo</a>
+              <a class="secondary-btn" href="#comparison">Compare Algorithms</a>
+            </div>
+            <ul class="key-points">
+              <li>Integrity assurance during transit</li>
+              <li>Source authentication and patient safety</li>
+              <li>Non-repudiation for legal and audit compliance</li>
+            </ul>
+          </div>
+          <div class="hero-card">
+            <div class="mini-header">
+              <span class="dot green"></span>
+              <span class="dot amber"></span>
+              <span class="dot red"></span>
+            </div>
+            <div class="card-body">
+              <div class="status-block">
+                <span class="label">Integrity Status</span>
+                <strong>Protected</strong>
+              </div>
+              <div class="status-block">
+                <span class="label">Signature Scheme</span>
+                <strong>ECDSA P-256</strong>
+              </div>
+              <div class="status-block">
+                <span class="label">Hash Function</span>
+                <strong>SHA-256</strong>
+              </div>
+              <div class="status-block">
+                <span class="label">Audit Trail</span>
+                <strong>Immutable Log</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="overview" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow alt">Security Objective</p>
+            <h2>End-to-end protection for medical document exchange</h2>
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card">
+              <h3>Data Integrity</h3>
+              <p>
+                Cryptographic hashes detect any modification to diagnosis records,
+                prescription notes, or lab results while data is transmitted between
+                facilities and portals.
+              </p>
+            </article>
+            <article class="feature-card">
+              <h3>Authentication</h3>
+              <p>
+                Digital signatures allow recipients to verify that the document was created
+                by the legitimate clinician or institution and not by an attacker.
+              </p>
+            </article>
+            <article class="feature-card">
+              <h3>Non-Repudiation</h3>
+              <p>
+                A validated digital signature creates legal evidence that the sender signed
+                the record and cannot plausibly deny it later.
+              </p>
+            </article>
+            <article class="feature-card">
+              <h3>Auditability</h3>
+              <p>
+                Hashes and signatures can be logged, reviewed, and reconciled to support
+                compliance, incident response, and forensics investigations.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section muted">
+        <div class="container architecture-wrap">
+          <div class="section-heading left">
+            <p class="eyebrow alt">System Design</p>
+            <h2>Recommended workflow</h2>
+          </div>
+          <div class="flow-diagram">
+            <div class="flow-box">1. EHR Created</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">2. Hash with SHA-256</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">3. Sign with ECDSA P-256</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">4. Verify at Recipient</div>
+            <div class="arrow">→</div>
+            <div class="flow-box">5. Audit Log</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="comparison" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow alt">Algorithm Analysis</p>
+            <h2>Hash function and signature comparison</h2>
+          </div>
+
+          <div class="two-column">
+            <div class="panel">
+              <h3>Hash algorithms</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Algorithm</th>
+                    <th>Strength</th>
+                    <th>Use Case</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>SHA-1</td>
+                    <td>Weak; collisions practical</td>
+                    <td>Not recommended</td>
+                  </tr>
+                  <tr>
+                    <td>SHA-256</td>
+                    <td>Strong and widely deployed</td>
+                    <td>Recommended for EHR integrity</td>
+                  </tr>
+                  <tr>
+                    <td>SHA-512</td>
+                    <td>Very strong, slightly more compute</td>
+                    <td>High security workloads</td>
+                  </tr>
+                  <tr>
+                    <td>SHA3-256</td>
+                    <td>Strong alternative</td>
+                    <td>Modern cryptographic deployment</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="panel">
+              <h3>Signature schemes</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Scheme</th>
+                    <th>Security</th>
+                    <th>Operational Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>RSA-PSS</td>
+                    <td>Strong</td>
+                    <td>Good compatibility, larger keys</td>
+                  </tr>
+                  <tr>
+                    <td>ECDSA</td>
+                    <td>Strong</td>
+                    <td>Efficient, shorter keys, common in health APIs</td>
+                  </tr>
+                  <tr>
+                    <td>Ed25519</td>
+                    <td>Very strong</td>
+                    <td>Fast, compact, excellent for software signing</td>
+                  </tr>
+                  <tr>
+                    <td>ECDSA P-256</td>
+                    <td>Recommended</td>
+                    <td>Balanced performance and interoperability</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section metrics">
+        <div class="container">
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <span>Integrity</span>
+              <strong>High</strong>
+              <p>Any unauthorized alteration is detected immediately.</p>
+            </div>
+            <div class="metric-box">
+              <span>Authentication</span>
+              <strong>Strong</strong>
+              <p>Provider identity can be cryptographically verified.</p>
+            </div>
+            <div class="metric-box">
+              <span>Non-Repudiation</span>
+              <strong>Proven</strong>
+              <p>Sender cannot deny signing once the signature is validated.</p>
+            </div>
+            <div class="metric-box">
+              <span>Collision Resistance</span>
+              <strong>SHA-256</strong>
+              <p>Practical collision attacks remain infeasible.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="demo" class="section">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow alt">Interactive Evaluation</p>
+            <h2>Sample EHR integrity and signature demonstration</h2>
+          </div>
+
+          <div class="demo-grid">
+            <div class="panel">
+              <label for="messageInput">Sample medical record</label>
+              <textarea id="messageInput" rows="14">Patient ID: P-10482
+Name: Aisha Rahman
+DOB: 1987-04-20
+Diagnosis: Type 2 diabetes mellitus, stable
+Prescription: Metformin 500 mg twice daily for 30 days
+Consulting physician: Dr. Sarah Chen, MD
+Facility: Horizon Cardiovascular & Wellness Clinic
+Signed on: 2026-08-31</textarea>
+
+              <div class="input-row">
+                <label for="hashAlgorithm">Hash function</label>
+                <select id="hashAlgorithm">
+                  <option value="SHA-256">SHA-256</option>
+                  <option value="SHA-384">SHA-384</option>
+                  <option value="SHA-512">SHA-512</option>
+                </select>
+              </div>
+
+              <div class="button-row">
+                <button id="hashButton" class="primary-btn">Generate Hash</button>
+                <button id="signButton" class="secondary-btn">Generate Signature</button>
+              </div>
+            </div>
+
+            <div class="panel results-panel">
+              <h3>Security output</h3>
+              <div class="result-block">
+                <span class="label">Digest</span>
+                <div id="digestOutput" class="result-value">Awaiting hash generation...</div>
+              </div>
+              <div class="result-block">
+                <span class="label">Digital signature</span>
+                <div id="signatureOutput" class="result-value small">Awaiting signature generation...</div>
+              </div>
+              <div class="result-block">
+                <span class="label">Verification</span>
+                <div id="verificationOutput" class="result-value status">Awaiting verification...</div>
+              </div>
+              <div class="result-block">
+                <span class="label">Public key summary</span>
+                <div id="publicKeyOutput" class="result-value small">No key generated yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="recommendation" class="section recommendation">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow alt">Deployment Recommendation</p>
+            <h2>Optimal protocol for secure health information exchange</h2>
+          </div>
+          <div class="recommendation-box">
+            <p>
+              For an electronic health record ecosystem, the strongest practical deployment is
+              SHA-256 for document hashing combined with ECDSA P-256 or Ed25519 digital signatures,
+              enforced through certificate-based identity management and secure key storage in HSMs.
+              This balance offers fast verification, strong collision resistance, efficient bandwidth use,
+              and reliable non-repudiation without incurring the overhead of legacy RSA key sizes.
+            </p>
+            <ul>
+              <li>Hashing: SHA-256 for message integrity across lab, clinician, and insurer records</li>
+              <li>Signing: ECDSA P-256 or Ed25519 for provider authentication and repudiation prevention</li>
+              <li>Key protection: Hardware security modules and PKI certificates</li>
+              <li>Audit and governance: time-stamped logs for forensic review and compliance</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <p>Designed for secure telemedicine healthcare exchange and EHR integrity assurance.</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
