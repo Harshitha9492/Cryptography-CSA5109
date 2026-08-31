@@ -1,0 +1,59 @@
+from datetime import datetime
+
+print("===== INTRUSION PREVENTION SYSTEM =====")
+
+# Malicious patterns
+malicious_patterns = [
+    "SQL_INJECTION",
+    "MALWARE",
+    "PORT_SCAN",
+    "DOS_ATTACK",
+    "BRUTE_FORCE"
+]
+
+
+def inspect_request(request):
+    request = request.upper()
+
+    for pattern in malicious_patterns:
+        if pattern in request:
+            return True, pattern
+
+    return False, None
+
+
+def log_intrusion(request, pattern):
+    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open("intrusion_log.txt", "a") as file:
+        file.write(
+            f"{time} | BLOCKED | "
+            f"Pattern: {pattern} | Request: {request}\n"
+        )
+
+
+# Real-time monitoring
+while True:
+
+    request = input(
+        "\nEnter network request (or type EXIT): "
+    )
+
+    if request.upper() == "EXIT":
+        print("IPS monitoring stopped.")
+        break
+
+    malicious, pattern = inspect_request(request)
+
+    if malicious:
+
+        print("⚠ MALICIOUS REQUEST DETECTED!")
+        print("Pattern:", pattern)
+        print("Action: BLOCKED")
+
+        log_intrusion(request, pattern)
+
+    else:
+
+        print("Request is safe.")
+        print("Action: ALLOWED")
