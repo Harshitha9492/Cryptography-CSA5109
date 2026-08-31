@@ -1,0 +1,51 @@
+print("===== INTRUSION DETECTION SYSTEM =====")
+
+# Known attack signatures
+signatures = [
+    "MALWARE",
+    "SQL_INJECTION",
+    "PORT_SCAN",
+    "DOS_ATTACK"
+]
+
+# User input
+activity = input(
+    "Enter network activity: "
+).upper()
+
+packet_count = int(
+    input("Enter number of packets per second: ")
+)
+
+# Signature detection
+signature_detected = False
+
+for signature in signatures:
+    if signature in activity:
+        signature_detected = True
+        print("\nSignature detected:", signature)
+        break
+
+
+# Anomaly detection
+NORMAL_LIMIT = 1000
+
+if packet_count > NORMAL_LIMIT:
+    anomaly_detected = True
+else:
+    anomaly_detected = False
+
+
+# Final IDS decision
+print("\n===== IDS RESULT =====")
+
+if signature_detected:
+    print("ALERT: Known malicious activity detected!")
+
+elif anomaly_detected:
+    print("ALERT: Abnormal network activity detected!")
+
+else:
+    print("No suspicious activity detected.")
+
+print("IDS scanning completed.")
