@@ -1,0 +1,57 @@
+import secrets
+import hashlib
+
+print("===== SIMPLIFIED TLS HANDSHAKE =====")
+
+# Step 1: Client sends request
+print("\n1. Client: Hello Server")
+client_random = secrets.token_hex(8)
+print("Client Random:", client_random)
+
+# Step 2: Server responds
+print("\n2. Server: Hello Client")
+
+server_random = secrets.token_hex(8)
+print("Server Random:", server_random)
+
+# Step 3: Server sends digital certificate
+print("\n3. Server sends Digital Certificate")
+
+certificate = {
+    "domain": "secure.example.com",
+    "issuer": "Trusted CA",
+    "public_key": "SERVER_PUBLIC_KEY"
+}
+
+print("Certificate Domain:", certificate["domain"])
+print("Certificate Issuer:", certificate["issuer"])
+
+# Step 4: Client verifies certificate
+print("\n4. Client verifies Certificate")
+
+if certificate["issuer"] == "Trusted CA":
+    print("Certificate verification successful!")
+else:
+    print("Certificate verification failed!")
+    exit()
+
+# Step 5: Generate session key
+print("\n5. Generating Session Key")
+
+session_key = secrets.token_hex(16)
+print("Session key generated successfully.")
+
+# Step 6: Secure data exchange
+print("\n6. Secure Data Exchange")
+
+message = "Patient medical record"
+print("Original message:", message)
+
+# Simple demonstration of hashing
+secure_message = hashlib.sha256(
+    (message + session_key).encode()
+).hexdigest()
+
+print("Encrypted/Protected Data:", secure_message)
+
+print("\n===== TLS HANDSHAKE COMPLETED =====")
